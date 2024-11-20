@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Elo Guesser</title>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='chess.ico') }}">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css" />
+    <style>
+        /* Reset some default styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Body styles */
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: #f4f7fa;
+            color: #333;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+
+        /* Center the container */
+        .game-container {
+            text-align: center;
+            background-color: #fff;
+            border-radius: 15px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            padding: 40px;
+            width: 800px;
+            margin-bottom: 20px; /* Space for footer */
+        }
+
+        /* Header styles */
+        header h1 {
+            font-size: 2rem;
+            color: #2a2a2a;
+            margin-bottom: 20px;
+        }
+
+        /* Chessboard styles */
+        #board {
+            margin: 20px auto;
+        }
+
+        /* Button styles */
+        .buttons {
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+
+        button {
+            background-color: #3498db;
+            color: white;
+            border: none;
+            padding: 12px 25px;
+            font-size: 16px;
+            border-radius: 30px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #2980b9;
+        }
+
+        /* Elo Input styles */
+        .elo-input {
+            margin-top: 30px;
+        }
+
+        .elo-input label {
+            font-size: 1rem;
+            margin-right: 10px;
+        }
+
+        .elo-input input {
+            padding: 10px;
+            font-size: 1rem;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            margin: 5px 0;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 20px;
+        }
+
+        /* Popup styles */
+        .popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            z-index: 1000;
+        }
+
+        .popup button {
+            background-color: #27ae60;
+            margin-top: 20px;
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 500;
+        }
+
+        /* Footer styles */
+        footer {
+            width: 100%;
+            text-align: center;
+            padding: 20px;
+            background-color: #2c3e50;
+            color: white;
+            font-size: 1rem;
+            margin-top: 20px;
+        }
+        /* Update for mobile responsiveness */
+        @media (max-width: 768px) {
+            /* Game container width */
+            .game-container {
+                width: 100%;
+                padding: 20px;
+            }
+
+            /* Chessboard size */
+            #board {
+                width: 100% !important;
+                max-width: 100%;
+                margin: 0 auto;
+            }
+
+            /* Button styles for mobile */
+            .buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .buttons button {
+                width: 100%;
+                margin-bottom: 10px;
+            }
+
+            /* Elo Input width adjustment */
+            .elo-input input {
+                width: 100%;
+            }
+
+            /* Adjust font sizes for smaller screens */
+            header h1 {
+                font-size: 1.5rem;
+            }
+
+            footer {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Ensure the overlay covers the whole screen on mobile */
+        @media (max-width: 600px) {
+            .popup {
+                width: 90%;
+                padding: 15px;
+            }
+
+            footer {
+                font-size: 0.8rem;
+            }
+        }
+
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
+</head>
+<body>
+    <div class="overlay" id="overlay"></div>
+
+    <div class="popup" id="popup">
+        <p><strong>Your Guess:</strong></p>
+        <p id="guess-feedback"></p>
+        <p><strong>Actual Elo:</strong></p>
+        <p id="actual-feedback"></p>
+        <button id="new-round">Play New Round</button>
+    </div>
+
+    <div class="game-container">
+        <h1>Elo Guesser (Lichess)</h1>
+        <div id="board" style="width: 400px;"></div>
+
+        <div class="buttons">
+            <button id="prev-move">Previous Move</button>
+            <button id="next-move">Next Move</button>
+        </div>
+
+        <div id="info">
+            <div class="elo-input">
+                <label for="white-elo">White Elo:</label>
+                <input type="number" id="white-elo" placeholder="Enter White Elo" />
+                <label for="black-elo">Black Elo:</label>
+                <input type="number" id="black-elo" placeholder="Enter Black Elo" />
+                <button id="submit-guess">Submit Guess</button>
+            </div>
+        </div>
+    </div>
+
+    <footer>
+        <p>&copy; 2024 Elo Guesser | Made with ❤️ by ToprakG</p>
+    </footer>
+
+    <script>
+        let game, board;
+        let moves = [];
+        let currentMoveIndex = 0;
+
+        // Initialize the chessboard
+        function initChessboard() {
+            game = new Chess();
+            board = Chessboard('board', { position: 'start', draggable: false });
+        }
+
+        // Fetch game data from Flask backend
+        async function fetchGame() {
+            const response = await fetch('/get_game');
+            const data = await response.json();
+
+            if (data.error) {
+                console.error('Error fetching game:', data.error);
+                return;
+            }
+
+            moves = data.moves;
+
+            // Reset game state
+            game.reset();
+            currentMoveIndex = 0;
+            board.position(game.fen());
+        }
+
+        // Navigate moves
+        function navigateMove(direction) {
+            if (direction === 'next' && currentMoveIndex < moves.length) {
+                game.move(moves[currentMoveIndex]);
+                currentMoveIndex++;
+                board.position(game.fen());
+            } else if (direction === 'prev' && currentMoveIndex > 0) {
+                game.undo();
+                currentMoveIndex--;
+                board.position(game.fen());
+            }
+        }
+
+        // Submit Elo guesses
+        function submitGuess() {
+            const whiteElo = document.getElementById('white-elo').value;
+            const blackElo = document.getElementById('black-elo').value;
+
+            if (!whiteElo || !blackElo) {
+                alert('Please enter guesses for both White and Black Elo.');
+                return;
+            }
+
+            fetch('/get_game')  // Fetch the game data again to verify Elo
+                .then(response => response.json())
+                .then(data => {
+                    const whiteEloActual = data.white_elo;
+                    const blackEloActual = data.black_elo;
+
+                    // Show popup with feedback
+                    document.getElementById('guess-feedback').innerHTML = `
+                        White: ${whiteElo}, Black: ${blackElo}
+                    `;
+                    document.getElementById('actual-feedback').innerHTML = `
+                        White: ${whiteEloActual}, Black: ${blackEloActual}
+                    `;
+
+                    document.getElementById('popup').style.display = 'block';
+                    document.getElementById('overlay').style.display = 'block';
+                })
+                .catch(err => console.error('Error submitting guess:', err));
+        }
+
+        // Play New Round (Refresh)
+        function playNewRound() {
+            window.location.reload();
+        }
+
+        // Event Listeners
+        document.getElementById('next-move').addEventListener('click', () => navigateMove('next'));
+        document.getElementById('prev-move').addEventListener('click', () => navigateMove('prev'));
+        document.getElementById('submit-guess').addEventListener('click', submitGuess);
+        document.getElementById('new-round').addEventListener('click', playNewRound);
+
+        // Initialize board and fetch game
+        initChessboard();
+        fetchGame();
+
+    </script>
+</body>
+</html>
