@@ -7,6 +7,8 @@
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='chess.ico') }}">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.css" />
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-1445516734865437"
+     crossorigin="anonymous"></script>
     <style>
         /* Reset some default styles */
         * {
@@ -188,6 +190,15 @@
             }
         }
 
+        /* Fixed position for the "Buy me a hamburger" button */
+        .bmc-button-container {
+            position: fixed;
+            bottom: 20px; /* Distance from the bottom of the page */
+            left: 50%;
+            transform: translateX(-50%); /* Center the button horizontally */
+            z-index: 1000; /* Ensure it appears on top of other content */
+        }
+
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.2/chess.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/chessboard-js/1.0.0/chessboard-1.0.0.min.js"></script>
@@ -221,6 +232,15 @@
                 <button id="submit-guess">Submit Guess</button>
             </div>
         </div>
+    </div>
+
+    <!-- Fixed position for "Buy me a hamburger" button -->
+    <div class="bmc-button-container">
+        <script type="text/javascript" src="https://cdnjs.buymeacoffee.com/1.0.0/button.prod.min.js"
+            data-name="bmc-button" data-slug="toprakg" data-color="#FFDD00"
+            data-emoji="🍔" data-font="Bree" data-text="Buy me a hamburger"
+            data-outline-color="#000000" data-font-color="#000000"
+            data-coffee-color="#ffffff"></script>
     </div>
 
     <footer>
