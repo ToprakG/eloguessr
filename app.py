@@ -110,4 +110,4 @@ def chess_pieces(filename):
     return send_from_directory('static/img/chesspieces/wikipedia', filename)
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(debug=False, host='0.0.0.0')
